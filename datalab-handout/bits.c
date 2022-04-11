@@ -142,8 +142,10 @@ NOTES:
  *   Max ops: 14
  *   Rating: 1
  */
+//tips:自行百度异或公式
 int bitXor(int x, int y) {
-  return 2;
+  
+  return ~(x&y)&~(~x&~y);
 }
 /* 
  * tmin - return minimum two's complement integer 
@@ -151,9 +153,10 @@ int bitXor(int x, int y) {
  *   Max ops: 4
  *   Rating: 1
  */
+//tips:just return
 int tmin(void) {
 
-  return 2;
+  return 0x1<<31;
 
 }
 //2
@@ -164,8 +167,11 @@ int tmin(void) {
  *   Max ops: 10
  *   Rating: 1
  */
+//tips:
 int isTmax(int x) {
-  return 2;
+  int y=x+1;
+  
+  return (!(~(x^y)))&(!!y);
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -176,7 +182,11 @@ int isTmax(int x) {
  *   Rating: 2
  */
 int allOddBits(int x) {
-  return 2;
+int y=0xAA;
+int z=y+(y<<8)+(y<<16)+(y<<24);
+//printf("%x",z);
+//printf("%x",y);
+  return !~((x&z)^(~z));
 }
 /* 
  * negate - return -x 
@@ -186,7 +196,8 @@ int allOddBits(int x) {
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+
+  return ~x+1;
 }
 //3
 /* 
@@ -199,7 +210,9 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return 2;
+  int a=x+~(0x30)+1;
+  int b=~x+0x39+1;
+  return (!(a>>31))&(!(b>>31));
 }
 /* 
  * conditional - same as x ? y : z 
@@ -209,7 +222,8 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  return 2;
+  int a=~!x+1;
+  return (~a&y)|(a&z);
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -219,7 +233,16 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+  int a=~x+1+y;//a=y-x,正-负有可能溢出,
+  int c=(a>>31)+1;
+  int x_l=x>>31;
+  int y_l=y>>31;
+  int xPyN=(!x_l)&y_l;//关键在这里把正负单独拿出来
+  int xNyP=(!y_l)&x_l;
+  // printf("%x\n",b);
+  // printf("%x\n",k);
+
+  return (xNyP|c)&(!xPyN);
 }
 //4
 /* 
@@ -231,7 +254,9 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4 
  */
 int logicalNeg(int x) {
-  return 2;
+  int y=x|(~x+1);
+  int z=y>>31;
+  return z+1;
 }
 /* howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
@@ -246,7 +271,26 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-  return 0;
+    int temp=x^(x>>31);//get positive of x;
+    int isZero=!temp;
+    //notZeroMask is 0xffffffff
+    int notZeroMask=(!(!temp)<<31)>>31;
+    int bit_16,bit_8,bit_4,bit_2,bit_1;
+    bit_16=!(!(temp>>16))<<4;
+    //see if the high 16bits have value,if have,then we need at least 16 bits
+    //if the highest 16 bits have value,then rightshift 16 to see the exact place of  
+    //if not means they are all zero,right shift nothing and we should only consider the low 16 bits
+    temp=temp>>bit_16;
+    bit_8=!(!(temp>>8))<<3;
+    temp=temp>>bit_8;
+    bit_4=!(!(temp>>4))<<2;
+    temp=temp>>bit_4;
+    bit_2=!(!(temp>>2))<<1;
+    temp=temp>>bit_2;
+    bit_1=!(!(temp>>1));
+    temp=bit_16+bit_8+bit_4+bit_2+bit_1+2;//at least we need one bit for 1 to tmax,
+    //and we need another bit for sign
+    return isZero|(temp&notZeroMask);
 }
 //float
 /* 
@@ -260,8 +304,28 @@ int howManyBits(int x) {
  *   Max ops: 30
  *   Rating: 4
  */
+//32=1+8+24
+//
 unsigned floatScale2(unsigned uf) {
-  return 2;
+int x=(0x1)<<23;
+unsigned po=(uf<<1)>>24,ans;
+unsigned flo=(uf<<9)>>9;
+// printf("%x\n",po);
+// printf("%x\n",uf);
+// printf("%x\n",flo);
+if(uf==0||uf==0x80000000||po==0xff)
+{
+  return uf;
+}
+if(po==0)
+{
+ans=uf-flo+flo<<1;
+if(uf>>31==1)
+ans=ans|0x80000000;
+return ans;
+}
+//unsigned ans=uf+x;
+  return uf+x;
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -275,8 +339,45 @@ unsigned floatScale2(unsigned uf) {
  *   Max ops: 30
  *   Rating: 4
  */
+//0011 1111 1000
 int floatFloat2Int(unsigned uf) {
-  return 2;
+  int ans;
+  unsigned po=(uf<<1)>>24;
+  //printf("%d\n",po);
+  int pos=po-127;
+  // printf("%x\n",uf);
+  // printf("%x\n",uf<<1);
+  // printf("%x\n",po);
+  unsigned flo=(uf<<9)>>9;  
+  unsigned tmp;
+//0011 1111 1000
+  if(po==0||pos<0)
+  {
+    //printf("%x\n",uf<<1);
+    //printf("%d\n",po);
+    //("%s\n","COUT 0");
+  return 0;
+  }
+  //0111 1111 0000000
+  else if(pos>=32||po==0xff)
+  {
+    //printf("%s\n","Special");
+return 0x80000000;
+  }
+  
+  else{
+    //printf("%d\n",pos);
+    
+    tmp=(flo+0x00800000)>>(23-pos);
+    ans=tmp;
+    if(uf>>31==1)
+    ans=~ans+1;
+    
+    //printf("%s\n","Normal");
+    return ans;
+    
+  }
+  return 0;
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
@@ -292,5 +393,21 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
-    return 2;
+  unsigned ans;
+  //int tmp;
+  unsigned t;
+  if(x>=128)
+  return 0x7f800000;
+  else if(x<=-150)
+  return 0;
+  else if(x<-127)
+  {
+    return 150+x;
+  }
+else{
+t=127+x;
+ans=t<<23;
+return ans;
+}
+    
 }
