@@ -1,0 +1,52 @@
+Border relations with Canada have never been better.
+1 2 4 8 16 32
+5 206
+7 0   DrEvil  //
+yonefg  //
+4 3 2 1 6 5 
+22/20
+maduiersnfotvbylSo you think you can stop the bomb with ctrl-c, do you?"
+
+$2 = 0x603320
+0x603320 <node6>:	0x000001bb
+(gdb) x/d $rdx
+x
+(gdb) x 0x603320
+0x603320 <node6>:	443 b[0]
+(gdb) x 0x603310
+0x603310 <node5>:	477 b[1]
+(gdb) x 0x603300
+0x603300 <node4>:	691
+
+(gdb) x 0x6032f0
+0x6032f0 <node3>:	924
+(gdb) x 0x6032e0
+0x6032e0 <node2>:	168
+(gdb)x 0x6032d0     
+0x6032e0 <node1>:	332
+(gdb) x 0x603318   ->3300
+0x603318 <node5+8>:	0x00603320
+(gdb) x 0x603308
+0x603308 <node4+8>:	0x00603310
+(gdb) x 0x6032f8
+0x6032f8 <node3+8>:	0x00603300
+(gdb) x 0x603208
+0x603208:	0x00000000
+(gdb) x 0x6032e8
+0x6032e8 <node2+8>:	0x006032f0
+(gdb) x 0x6032d8
+0x6032d8 <node1+8>:	0x006032e0
+(gdb) x 0x6032c8
+0x6032c8:	0x00000000
+(gdb) x 0x603328 
+0x603328 <node6+8>:	0x00000000 ->3310
+////////////////////////
+0x6030f0   36
+f8   NULL
+00   NULL
+08   0
+10   8
+18   NULL
+20   NULL
+28   NULL
+30   50
