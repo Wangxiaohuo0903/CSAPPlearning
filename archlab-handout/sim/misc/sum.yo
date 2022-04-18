@@ -1,0 +1,46 @@
+                            | # sum_list.ys by huo
+                            | # Execution begins at address 0
+                            | 
+0x000:                      |         .pos 0
+0x000: 30f40002000000000000 |         irmovq stack,%rsp
+0x00a: 805800000000000000   |         call main
+0x013: 00                   |         halt
+                            | 
+                            | # Sample linked list
+0x018:                      |         .align 8
+0x018:                      |     ele1:
+0x018: 0a00000000000000     |         .quad 0x00a
+0x020: 2800000000000000     |         .quad ele2
+0x028:                      |     ele2:
+0x028: b000000000000000     |         .quad 0x0b0
+0x030: 3800000000000000     |         .quad ele3
+0x038:                      |     ele3:
+0x038: 1000000000000000     |         .quad 0x010
+0x040: 4800000000000000     |         .quad ele4
+0x048:                      |     ele4:
+0x048: 000c000000000000     |         .quad 0xc00
+0x050: 0000000000000000     |         .quad 0
+                            | 
+0x058:                      |     main:
+0x058: 30f80800000000000000 |         irmovq $8,%r8
+0x062: 30f71800000000000000 |         irmovq ele1,%rdi
+0x06c: 807600000000000000   |         call sum_list
+0x075: 90                   |         ret
+                            | 
+0x076:                      |     sum_list:
+0x076: 6300                 |         xorq %rax,%rax  #val=0
+0x078: 6277                 |         andq %rdi,%rdi  #check ls!=0?
+0x07a: 709d00000000000000   |         jmp test
+                            | 
+0x083:                      |     loop:
+0x083: 50a70000000000000000 |         mrmovq (%rdi),%r10
+0x08d: 60a0                 |         addq %r10,%rax  #val+=ls-val
+0x08f: 6087                 |         addq %r8,%rdi   #ls=ls->next
+0x091: 50770000000000000000 |         mrmovq (%rdi),%rdi
+0x09b: 6277                 |         andq %rdi,%rdi
+0x09d:                      |     test:
+0x09d: 748300000000000000   |         jne loop   #stop when 0
+0x0a6: 90                   |         ret
+                            | 
+0x200:                      |         .pos 0x200
+0x200:                      |     stack:

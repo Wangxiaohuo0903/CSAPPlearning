@@ -21,22 +21,24 @@
     main:
         irmovq $8,%r8
         irmovq ele1,%rdi
-        call sum_list
+        irmovq $0,%r9
+        xorq %rax,%rax  #val=0
+        call rsum_list
         ret
 
-    sum_list:
-        xorq %rax,%rax  #val=0
+    rsum_list:
         andq %rdi,%rdi  #check ls!=0?
         jmp test
 
-    loop:
-        mrmovq (%rdi),%r10
-        addq %r10,%rax  #val+=ls-val
+    else:
+        mrmovq (%rdi),%r10 #val=ls>val
         addq %r8,%rdi   #ls=ls->next
         mrmovq (%rdi),%rdi
-        andq %rdi,%rdi
+        addq %r10,%rax
+        call rsum_list     
+        ret
     test:
-        jne loop   #stop when 0
+        jne else   #stop when 0
         ret
 
         .pos 0x200
