@@ -1,0 +1,14 @@
+5c5
+< tsh> [1](191350) ./myspin 2 &
+---
+> tsh> [1] (191343) ./myspin 2 &
+7c7
+< tsh> [2](191352) ./myspin 3 &
+---
+> tsh> [2] (191345) ./myspin 3 &
+9,10c9,10
+< tsh> [1] (191350) Running ./myspin 2 &
+< [2] (191352) Running ./myspin 3 &
+---
+> tsh> [1] (191343) Running ./myspin 2 &
+> [2] (191345) Running ./myspin 3 &

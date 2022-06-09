@@ -1,0 +1,12 @@
+5c5
+< tsh> [1](191384) ./myspin 4 &
+---
+> tsh> [1] (191377) ./myspin 4 &
+7c7
+< tsh> Job [2] (191386) terminated by signal 2 
+---
+> tsh> Job [2] (191379) terminated by signal 2
+9c9
+< tsh> [1] (191384) Running ./myspin 4 &
+---
+> tsh> [1] (191377) Running ./myspin 4 &

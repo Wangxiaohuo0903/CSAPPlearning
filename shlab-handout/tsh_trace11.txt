@@ -1,0 +1,19 @@
+#
+# trace11.txt - Forward SIGINT to every process in foreground process group
+#
+tsh> tsh> ./mysplit 4
+tsh> Job [1] (191490) terminated by signal 2 
+tsh> tsh> /bin/ps a
+tsh>     PID TTY      STAT   TIME COMMAND
+   1749 tty2     Ssl+   0:00 /usr/lib/gdm3/gdm-x-session --run-script env GNOME_SHELL_SESSION_MODE=ubuntu /usr/bin/gnome-session --systemd --session=ubuntu
+   1751 tty2     Sl+   23:16 /usr/lib/xorg/Xorg vt2 -displayfd 3 -auth /run/user/1000/gdm/Xauthority -background none -noreset -keeptty -verbose 3
+   1789 tty2     Sl+    0:00 /usr/libexec/gnome-session-binary --systemd --systemd --session=ubuntu
+  14000 pts/1    Ss+    0:00 bash
+  43406 pts/0    Ss+    0:00 /bin/bash
+  87616 pts/2    Ss+    0:00 /bin/bash
+ 183092 pts/3    Ss     0:00 /bin/bash
+ 191310 pts/3    S+     0:00 /bin/bash ./test
+ 191487 pts/3    S+     0:00 /usr/bin/perl ./sdriver.pl -t trace11.txt -s ./tsh
+ 191488 pts/3    S+     0:00 ./tsh
+ 191493 pts/3    R      0:00 /bin/ps a
+tsh> 

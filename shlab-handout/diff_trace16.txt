@@ -1,0 +1,13 @@
+6,8c6,11
+< tsh> tsh> tsh> jobs
+< tsh> tsh> tsh> ./myint 2
+< tsh> tsh> 
+\ 文件尾没有换行符
+---
+> tsh> Job [1] (191642) stopped by signal 20
+> tsh> tsh> jobs
+> tsh> [1] (191642) Stopped ./mystop 2
+> tsh> tsh> ./myint 2
+> tsh> Job [2] (191651) terminated by signal 2
+> tsh> 
+\ 文件尾没有换行符

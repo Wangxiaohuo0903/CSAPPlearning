@@ -1,0 +1,33 @@
+5c5
+< tsh> ./bogus: Command not found.
+---
+> tsh> ./bogus: Command not found
+7,10c7
+< tsh> [1](191578) ./myspin 4 &
+< tsh> tsh> fg
+< tsh> tsh> tsh> ./myspin 4 &
+< tsh> [1](191582) ./myspin 4 &
+---
+> tsh> [1] (191555) ./myspin 4 &
+11a9,29
+> tsh> fg command requires PID or %jobid argument
+> tsh> tsh> bg
+> tsh> bg command requires PID or %jobid argument
+> tsh> tsh> fg a
+> tsh> fg: argument must be a PID or %jobid
+> tsh> tsh> bg a
+> tsh> bg: argument must be a PID or %jobid
+> tsh> tsh> fg 9999999
+> tsh> (9999999): No such process
+> tsh> tsh> bg 9999999
+> tsh> (9999999): No such process
+> tsh> tsh> fg %2
+> tsh> %2: No such job
+> tsh> tsh> fg %1
+> tsh> Job [1] (191555) stopped by signal 20
+> tsh> tsh> bg %2
+> tsh> %2: No such job
+> tsh> tsh> bg %1
+> tsh> [1] (191555) ./myspin 4 &
+> tsh> tsh> jobs
+> tsh> [1] (191555) Running ./myspin 4 &
