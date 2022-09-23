@@ -202,6 +202,7 @@ void eval(char *cmdline)
 
     if (!builtin_cmd(argv))
     {
+
         Sigfillset(&maskall);
         Sigemptyset(&maskone);
         Sigaddset(&maskone, SIGCHLD);
@@ -300,22 +301,25 @@ int parseline(const char *cmdline, char **argv)
  */
 int builtin_cmd(char **argv)
 {
+
     if (!strcmp(argv[0], "quit"))
         exit(0);
-    if (!strcmp(argv[0], "&"))
+    else if (!strcmp(argv[0], "&"))
         return 1;
-    if (!strcmp(argv[0], "jobs"))
+    else if (!strcmp(argv[0], "jobs"))
     {
+
         listjobs(jobs);
         return 1;
     }
-    if (!strcmp(argv[0], "fg") | !strcmp(argv[0], "bg"))
+    else if (!strcmp((argv[0]), "fg") || !strcmp((argv[0]), "bg"))
     {
+
         do_bgfg(argv);
         return 1;
     }
-
-    return 0;
+    else
+        return 0;
     /* not a builtin command */
 }
 
@@ -324,27 +328,50 @@ int builtin_cmd(char **argv)
  */
 void do_bgfg(char **argv)
 {
+    if (!argv[1])
+    {
+        printf("%s command requires PID or %%jobid argument\n", argv[0]);
+        return;
+    }
+
+    if (!isdigit(argv[1][0]) && argv[1][0] != '%')
+    { // Checks if the second argument is valid
+        printf("%s: argument must be a PID or %%jobid\n", argv[0]);
+        return;
+    }
+
     char *number = argv[1];
     int pid;
     struct job_t *cur;
 
     if (number[0] == '%') //说明是jobid
     {
-        int jid = atoi(((char *)number) + 1);
-        cur = getjobjid(jobs, jid);
+        // int jid = atoi(((char *)number) + 1);
+        cur = getjobjid(jobs, atoi(&argv[1][1]));
+
+        if (!cur)
+        { // Checks if the given PID is there
+            printf("%s: No such process\n", argv[1]);
+            return;
+        }
         pid = cur->pid;
     }
     else
     {
         pid = atoi(number);
         cur = getjobpid(jobs, pid);
+        if (!cur)
+        { // Checks if the given PID is there
+            printf("(%d): No such process\n", atoi(argv[1]));
+            return;
+        }
     }
 
     Kill(-pid, SIGCONT);
     if (!strcmp(argv[0], "bg"))
     {
         cur->state = BG;
-        printf("[%d] (%d) %s", pid2jid(pid), pid, cur->cmdline);
+        printf("[%d] (%d) %s \n", pid2jid(pid), pid, cur->cmdline);
     }
     else
     {
@@ -378,21 +405,42 @@ void waitfg(pid_t pid)
  */
 void sigchld_handler(int sig)
 {
-    int olderrno = errno;
-    sigset_t mask_all, prev_all;
-    pid_t pid;
-    Sigfillset(&mask_all);
-    while ((pid = waitpid(-1, NULL, WNOHANG | WUNTRACED)) > 0)
-    {
-        Sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
-        deletejob(jobs, pid);
-        Sigprocmask(SIG_SETMASK, &prev_all, NULL);
-    }
-    //因为取消了阻塞，所以这里可以删除了
-    // if (errno != ECHILD)
-    //     sio_error("waitpid error");
 
-    errno = olderrno;
+    int olderrno = errno;
+    sigset_t mask_all, prev;
+    pid_t pid;
+    int status;
+    Sigfillset(&mask_all);
+    /*改成非阻塞，否则test05中运行到此处，前端进程执行jobs会阻塞直到所有子进程都被回收，即两个后端进程都执行并delete才会离开，则jobs命令什么也没有打印*/
+    while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0)
+    {
+        // WNOHANG | WUNTRACED 是立即返回
+        // 用WIFEXITED(status)，WIFSIGNALED(status)，WIFSTOPPED(status)等来补获终止或者
+        // 被停止的子进程的退出状态。
+        if (WIFEXITED(status)) // 正常退出 delete
+        {
+            sigprocmask(SIG_BLOCK, &mask_all, &prev);
+            deletejob(jobs, pid);
+            sigprocmask(SIG_SETMASK, &prev, NULL);
+        }
+        else if (WIFSIGNALED(status)) // 信号退出 delete
+        {
+            struct job_t *job = getjobpid(jobs, pid);
+            sigprocmask(SIG_BLOCK, &mask_all, &prev);
+            printf("Job [%d] (%d) terminated by signal %d\n", job->jid, job->pid, WTERMSIG(status));
+            deletejob(jobs, pid);
+            sigprocmask(SIG_SETMASK, &prev, NULL);
+        }
+        else // 停止 只修改状态就行
+        {
+            struct job_t *job = getjobpid(jobs, pid);
+            sigprocmask(SIG_BLOCK, &mask_all, &prev);
+            printf("Job [%d] (%d) stopped by signal %d\n", job->jid, job->pid, WSTOPSIG(status));
+            job->state = ST;
+            sigprocmask(SIG_SETMASK, &prev, NULL);
+        }
+    }
+    errno = olderrno; // 恢复
     return;
 }
 
@@ -405,10 +453,11 @@ void sigint_handler(int sig)
 {
     int olderrno = errno;
 
-    pid_t pid = fgpid(jobs);
-    printf("Job [%d] (%d) terminated by signal %d \n", pid2jid(pid), pid, sig);
-    deletejob(jobs, pid);
-    Kill(-pid, sig);
+    pid_t fg = fgpid(jobs);
+    if (fg)
+    {
+        Kill(-fg, sig);
+    }
     errno = olderrno;
     return;
 }
@@ -420,10 +469,13 @@ void sigint_handler(int sig)
  */
 void sigtstp_handler(int sig)
 {
-    pid_t pid = fgpid(jobs);
-    printf("Job [%d] (%d) stopped by signal %d \n", pid2jid(pid), pid, sig);
-    (*getjobpid(jobs, pid)).state = ST;
-    Kill(-pid, sig);
+    int olderrno = errno;
+    pid_t fg = fgpid(jobs);
+    if (fg)
+    {
+        Kill(-fg, sig);
+    }
+    errno = olderrno;
 }
 
 /*********************
@@ -699,6 +751,7 @@ void Kill(pid_t pid, int signum)
 
     if ((rc = kill(pid, signum)) < 0)
         unix_error("Kill error");
+    return;
 }
 /* $end kill */
 
